@@ -4,12 +4,11 @@
   </div>
 </template>
 <script>
-import { useRoute } from 'vue-router';
+import { setup, components } from './index';
+
 export default {
-  setup() {
-    const route = useRoute();
-    console.log('in');
-    console.log({ ...route });
-  }
+  name: 'home',
+  components,
+  setup,
 }
 </script>

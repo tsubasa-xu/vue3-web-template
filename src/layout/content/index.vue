@@ -5,7 +5,6 @@
 
 export default {
   name: 'content-layout',
-  setup () {},
 }
 </script>
 <style>

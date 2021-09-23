@@ -4,9 +4,9 @@
   </div>
 </template>
 <script>
+import { setup } from './index';
 export default {
-  setup(props) {
-    console.log('about')
-  }
+  name: 'about',
+  setup,
 }
 </script>

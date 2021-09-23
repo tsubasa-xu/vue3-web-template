@@ -4,14 +4,11 @@
   </div>
 </template>
 <script>
-import loginModal from '../login/components/login-modal/index.vue'
+import { setup, components } from './index';
 export default {
-  components: {
-    'login-modal': loginModal
-  },
-  setup() {
-
-  }
+  name: 'login',
+  components,
+  setup,
 }
 </script>
 <style scoped>

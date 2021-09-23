@@ -5,7 +5,7 @@
 */
 import type { App } from 'vue'
 
-const pluginPath = import.meta.globEager('../plugins/*/*.ts');
+const pluginPath = import.meta.globEager('../plugins/*/index.ts');
 const plugins:Array<any> = [];
 Object.keys(pluginPath).forEach(key => {
   if (pluginPath[key].default !== undefined) {

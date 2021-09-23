@@ -12,16 +12,20 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, getCurrentInstance, computed } from 'vue'
-import { NDialogProvider, NNotificationProvider, NMessageProvider, NLoadingBarProvider } from 'naive-ui'
+import { defineComponent, getCurrentInstance, computed } from 'vue';
+import { NDialogProvider, NNotificationProvider, NMessageProvider, NLoadingBarProvider } from 'naive-ui';
 
 export default defineComponent({
   name: 'App',
   components: { NDialogProvider, NNotificationProvider, NMessageProvider, NLoadingBarProvider },
   setup() {
     const getLayout = computed(function() {
-      const { proxy } = getCurrentInstance();
-      return `${proxy.$root.$route.meta.layout}-layout` || "login-alyout"
+      const { proxy } : any = getCurrentInstance();
+      if (proxy) {
+        return `${proxy.$root.$route.meta.layout}-layout`;
+      } else {
+        return 'empty-layout';
+      }
     });
     return {
       getLayout

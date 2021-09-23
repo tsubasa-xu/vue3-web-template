@@ -47,40 +47,17 @@
           ghost
           type="primary"
           :disabled="loginCheck"
-          @click="login"
+          @click.stop="login"
         >登录</n-button>
       </template>
     </n-card>
   </div>
 </template>
 <script>
-import { ref, computed, inject } from 'vue'
-import { NForm, NInput, NButton, NFormItem, NCard } from 'naive-ui'
+import { setup } from './index';
 
 export default {
-  components: {NForm, NInput, NButton, NFormItem, NCard},
-  setup() {
-    const notify = inject("notify");
-    const formRef = ref(null);
-    const formObj = ref({
-      loginInfo: {
-        account: '',
-        pwd: '',
-      },
-    });
-    const login = function (e) {
-      e.preventDefault();
-    };
-    const loginCheck = computed(function(){
-      const obj = formObj.value.loginInfo;
-      return !(obj.account && obj.account.length > 0 && obj.pwd && obj.pwd.length);
-    });
-    return {
-      formRef,
-      formObj,
-      login,
-      loginCheck,
-    };
-  },
+  name: 'login-modal',
+  setup,
 }
 </script>

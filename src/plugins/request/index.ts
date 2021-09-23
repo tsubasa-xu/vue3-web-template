@@ -45,7 +45,7 @@ const responseFailHandler = function (error: any) {
   throw error;
 };
 
-function request (config:AxiosRequestConfig) {
+export function request (config:AxiosRequestConfig) {
   return new Promise((resolve, reject) => {
     const base = {
       timeout: 60000,

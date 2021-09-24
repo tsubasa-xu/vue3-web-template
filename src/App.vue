@@ -20,7 +20,7 @@ export default defineComponent({
   components: { NDialogProvider, NNotificationProvider, NMessageProvider, NLoadingBarProvider },
   setup() {
     const getLayout = computed(function() {
-      const { proxy } : any = getCurrentInstance();
+      const { proxy } :any = getCurrentInstance();
       if (proxy) {
         return `${proxy.$root.$route.meta.layout}-layout`;
       } else {

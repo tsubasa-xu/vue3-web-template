@@ -1,15 +1,11 @@
 import vue from '@vitejs/plugin-vue'
 
-const fs = require("fs")
 const path = require("path")
 const dotenv = require("dotenv")
 
-const envFiles = [
-  path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`)
-]
-
-for (const file of envFiles) {
-  const result = dotenv.config({ path: file });
+if (process.env.NODE_ENV) {
+  const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+  const result = dotenv.config({ path: envPath });
   if (result.error) {
     throw result.error;
   }

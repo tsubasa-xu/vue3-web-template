@@ -1,7 +1,9 @@
-import loginLayout from './login/index.vue';
-import contentLayout from './content/index.vue';
+import type { App } from 'vue'
 
-export default function layoutRegister (app: any) {
-  app.component('login-layout', loginLayout);
-  app.component('content-layout', contentLayout);
+import contentLayout from './content/index.vue'
+import noneLayout from './none/index.vue'
+
+export default function layoutRegister(app: App<Element>) {
+  app.component(contentLayout.name, contentLayout)
+  app.component(noneLayout.name, noneLayout)
 }

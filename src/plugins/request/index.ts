@@ -1,92 +1,139 @@
-/*
- *
- *  @authors xuzy(xyzy@go-goal.com)
- * @date 2021-08-05
- * 请求处理
- *
- */
-import type { App } from 'vue';
-import axios from 'axios';
-import { AxiosRequestConfig } from 'axios';
-import { notify } from '../notification';
+import axios from 'axios'
+import type { AxiosRequestConfig, AxiosResponse, Canceler } from 'axios'
 
-const requestInterceptors = function (config:any) {
-  if (config.method === 'post') {
-    config.transformRequest = [
-      function (data: any) {
-        const temp = [];
-        for (const it in data) {
-          temp.push(`${encodeURIComponent(it)}=${encodeURIComponent(data[it])}`);
-        };
-        return temp.join('&');
-      },
-    ];
-  };
-  return config;
-};
+import { isNull, isUndefined } from 'lodash'
+import type { Router } from 'vue-router'
+import { responseCodeErrorMap as networkErrMap, networkStatus, responseCode } from '@/enum'
+import type { IAnyObj, IObject, IRequest, IResponse } from '@/interface'
+import type { mainType } from '@/store'
+import { useStore } from '@/store'
+import router from '@/router'
+import { getUser } from '@/store/mutations-const'
+import { STResponse } from '@/class'
 
-const responseSuccessHandler = function (res: any) {
-  if (res.data.code === 1100) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('uinfo');
-    localStorage.removeItem('pages');
-    location.reload();
+class Request implements IRequest {
+  readonly host: string
+  static store: mainType
+  static router: Router
+  static localStorage: Request
+  static requestLog: { [key: string]: Canceler }
+
+  constructor() {
+    this.host = '/'
+    Request.requestLog = {}
+    Request.store = useStore()
+    Request.router = router
+    axios.interceptors.request.use(this.requestInterceptors)
+    axios.interceptors.response.use(this.responseInterceptors, this.handleNetWorkError)
   }
-  return res.data;
-};
 
-const responseFailHandler = function (error: any) {
-  const { message, config } = error;
-  notify.error({
-    title: `Api请求异常:`,
-    description: `来自${config.url}`,
-    content: message,
-  });
-  throw error;
-};
-
-export function request (config:AxiosRequestConfig) {
-  return new Promise((resolve, reject) => {
-    const base = {
-      timeout: 60000,
-      headers: {
-        Authorization: '',
-        post: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+  private requestInterceptors(config: AxiosRequestConfig) {
+    const { url } = config
+    if (typeof Request.requestLog[url!] === 'function')
+      Request.requestLog[url!]('强制取消请求！')
+    config.cancelToken = new axios.CancelToken((obj) => {
+      Request.requestLog[url!] = obj
+    })
+    if (Request.store[getUser] && Request.store[getUser].is_login) {
+      if (isNull(config.headers) || isUndefined(config.headers))
+        config.headers = {}
+      config.headers.Authorization = `Bearer ${Request.store[getUser].token}`
+    }
+    if (config.method === 'post') {
+      config.transformRequest = [
+        function (data: IObject) {
+          if (isUndefined(data) || isNull(data))
+            return {}
+          if (data instanceof FormData)
+            return data
+          if (config.headers && config.headers['Content-Type'] === 'application/json')
+            return JSON.stringify(data)
+          const temp = []
+          for (const it in data) {
+            if (isNull(data[it]))
+              temp.push(`${encodeURIComponent(it)}=`)
+            else
+              temp.push(`${encodeURIComponent(it)}=${encodeURIComponent(data[it])}`)
+          }
+          return temp.join('&')
         },
-      },
-    };
-    if (localStorage.getItem('token')) {
-      base.headers.Authorization = 'Bearer ' + localStorage.getItem('token');
-    };
-    const instance = axios.create(base);
-    instance.interceptors.request.use(requestInterceptors);
-    instance.interceptors.response.use(responseSuccessHandler, responseFailHandler);
-    instance(config).then((res: any) => {
-      if (Object.keys(res).indexOf('data') === -1) {
-        res.data = [];
-      };
-      if (res.code !== 0) {
-        notify.error({
-          title: `Api返回值异常:`,
-          description: `来自${config.url}`,
-          content: res.message,
-        });
-      }
-      if (typeof resolve === 'function' && res) {
-        return resolve(res);
-      };
-      return res;
-    }).catch(err => {
-      if (typeof reject === 'function') {
-        return reject(err);
-      };
-    });
-  });
+      ]
+    }
+    return config
+  }
+
+  private responseInterceptors(response: AxiosResponse<any, any>) {
+    if (response.config.url! in Request.requestLog)
+      delete Request.requestLog[response.config.url!]
+    if (response.status !== networkStatus.Success)
+      return Promise.reject(response)
+    Request.handleGeneralError(response.data)
+    return response
+  }
+
+  private handleNetWorkError(error: any) {
+    const { config, status } = error
+    if (config?.url in Object.keys(Request.requestLog))
+      delete Request.requestLog[config?.url]
+    if (status)
+      window.$message.error(networkErrMap.get(status) ?? `其他连接错误 --${status}`)
+    else
+      window.$message.error('无法连接到服务器！')
+    if (axios.isCancel(error))
+      return new Promise(() => {})
+    return Promise.reject(error)
+  }
+
+  static handleGeneralError(data: IResponse<any>): boolean {
+    if (data.code === responseCode.TokenInvalid || data.code === responseCode.ParamsError) {
+      window.$message.error('token过期，请重新登录！')
+      localStorage.clear()
+      Request.router.push('/login')
+      return false
+    }
+    if (data.code !== responseCode.Success) {
+      window.$message.error(data.message)
+      return false
+    }
+    return true
+  }
+
+  Get<T>(url: string, params?: IAnyObj): Promise<STResponse<T>> {
+    return new Promise((resolve) => {
+      axios
+        .get(url, { params })
+        .then((result) => {
+          resolve(new STResponse((result.data)))
+        })
+        .catch((err) => {
+          if (!axios.isCancel(err))
+            resolve(err)
+        })
+    })
+  }
+
+  Post<T>(url: string, data: IAnyObj, params?: IAnyObj): Promise<STResponse<T>> {
+    return new Promise<STResponse<T>>((resolve) => {
+      axios
+        .post(url, data, { params })
+        .then((result) => {
+          resolve(new STResponse((result.data)))
+        })
+        .catch((err) => {
+          if (!axios.isCancel(err))
+            resolve(err)
+        })
+    })
+  }
+
+  abortPromise() { }
 }
 
-export default {
-  install(app: App): void {
-    app.provide("request", request);
-  },
-};
+export default (() => {
+  let request: Request | null = null
+  return function () {
+    if (request)
+      return request
+    return request = new Request()
+  }
+})()

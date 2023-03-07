@@ -1,35 +1,53 @@
-<template>
-  <n-loading-bar-provider>
-    <n-message-provider>
-      <n-notification-provider>
-        <n-dialog-provider>
-          <notify></notify>
-          <component :is="getLayout"></component>
-        </n-dialog-provider>
-      </n-notification-provider>
-    </n-message-provider>
-  </n-loading-bar-provider>
-</template>
+<script setup lang="ts">
+import { dateZhCN, zhCN } from 'naive-ui'
 
-<script lang="ts">
-import { defineComponent, getCurrentInstance, computed } from 'vue';
-import { NDialogProvider, NNotificationProvider, NMessageProvider, NLoadingBarProvider } from 'naive-ui';
-
-export default defineComponent({
-  name: 'App',
-  components: { NDialogProvider, NNotificationProvider, NMessageProvider, NLoadingBarProvider },
-  setup() {
-    const getLayout = computed(function() {
-      const { proxy } :any = getCurrentInstance();
-      if (proxy) {
-        return `${proxy.$root.$route.meta.layout}-layout`;
-      } else {
-        return 'empty-layout';
-      }
-    });
-    return {
-      getLayout
-    };
+const themeOverrides = {
+  common: {
+    primaryColor: '#0F62FE',
+    primaryColorHover: '#2771fa',
+    primaryColorPressed: '#0c4dc5',
+    scrollbarColor: '#393939',
   },
+  Tree: {
+    nodeColorHover: 'rgba(118, 124, 130, 0.5)',
+  },
+}
+const getLayout = computed(() => {
+  const route = useRoute()
+  if (route.meta.layout)
+    return `${route.meta.layout}-layout`
+
+  return 'none-layout'
+})
+const listenerErrorHandler = function (eventErr: Event) {
+  if (['link', 'script'].includes((<HTMLLinkElement | HTMLScriptElement>eventErr?.target).localName))
+    window.location.reload()
+}
+const listenSourceError = function () {
+  window.addEventListener('error', listenerErrorHandler, true)
+}
+onMounted(() => {
+  listenSourceError()
 })
 </script>
+
+<template>
+  <n-config-provider
+    :date-locale="dateZhCN"
+    inline-theme-disabled
+    :locale="zhCN"
+    :theme-overrides="themeOverrides"
+  >
+    <n-loading-bar-provider>
+      <n-message-provider>
+        <n-notification-provider container-style="height: 100vh;pointer-events: none;">
+          <n-dialog-provider>
+            <div class="h-screen w-screen flex">
+              <component :is="getLayout" />
+            </div>
+          </n-dialog-provider>
+        </n-notification-provider>
+      </n-message-provider>
+    </n-loading-bar-provider>
+  </n-config-provider>
+</template>

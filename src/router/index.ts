@@ -1,56 +1,57 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import { notify } from '../plugins/notification';
+import type { NavigationGuardNext, RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
+import { useStore } from '@/store'
+import { getTimeoutID, getUser, setAutoRefresh } from '@/store/mutations-const'
 
-const routesModules = import.meta.globEager('../views/**/router/index.ts');
-const modules:Array<RouteRecordRaw> = [];
+const routesModules = import.meta.glob<any>('../pages/**/router/**/*.ts', { eager: true })
+const modules: Array<RouteRecordRaw> = []
+Object.keys(routesModules).forEach((key: string) => {
+  const obj: Array<RouteRecordRaw> = (routesModules[`${key}`].default as Array<RouteRecordRaw>).map((path: RouteRecordRaw) => {
+    return path
+  })
+  modules.push(...obj)
+})
 
-Object.keys(routesModules).forEach(key => {
-  modules.push(...routesModules[key].default);
-});
-
-const routes:Array<RouteRecordRaw> = [
-  {
-    path: '/login',
-    name: 'login',
-    component: () => import('../views/login/index.vue'),
-    meta: {
-      layout: 'login',
-      title: '登录',
-      noCheck: true,
-    },
-  },
-  {
-    path: '/home',
-    name: 'home',
-    component: () => import('../views/home/index.vue'),
-    meta: {
-      layout: 'content',
-      title: '首页',
-      noCheck: true,
-    },
-  },
-  ...modules
-];
+const routes = [
+  ...modules,
+]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-});
+})
 
-const check_power = () => {
-  return true;
-};
+type checkPermissionType = (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => void
 
-router.beforeEach((to: any, from: any, next: any) => {
-  if (to.meta.noCheck || check_power()) {
-    document.title = to.meta.title;
-    next();
-    return;
-  } else {
-    notify.error({content: '对不起，请先登录后重试', title: '登录状态异常'});
-    next({ name: 'login' });
-    return;
+const checkPermission: checkPermissionType = function (to, from, next) {
+  const store = useStore()
+  if (isNaN(store[getTimeoutID]))
+    store[setAutoRefresh]()
+  if (store[getUser].is_login) {
+    return next()
   }
-});
+  else {
+    window.$message.error('尚未登录，请先登录！')
+    return next({ name: 'login' })
+  }
+}
 
-export default router;
+router.beforeEach((to, from, next) => {
+  if (to.matched.length === 0)
+    return next({ name: 'result', params: { code: '404' } })
+  if (to.meta.title) {
+    useHead({
+      title: to.meta.title,
+    })
+  }
+  if (to.meta.noLogin) {
+    return next()
+  }
+  else {
+    if (to.meta.noCheck)
+      return next()
+    return checkPermission(to, from, next)
+  }
+})
+
+export default router

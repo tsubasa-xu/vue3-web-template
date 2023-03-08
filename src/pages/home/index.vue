@@ -28,9 +28,11 @@ const store = useStore()
     color: $text-color;
   }
 }
+
 .test2 {
   @apply border hover:border-[1rem] hover:text-[$st-blue];
 }
+
 .test {
   @include ul-item;
 }

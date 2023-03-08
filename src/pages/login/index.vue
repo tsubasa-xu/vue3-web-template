@@ -140,8 +140,8 @@ async function signIn() {
               id="linearGradient" inkscape:collect="always" x1="13" y1="193.49992" x2="307" y2="193.49992"
               gradientUnits="userSpaceOnUse"
             >
-              <stop id="stop876" style="stop-color:#ff00ff;" offset="0" />
-              <stop id="stop878" style="stop-color:#ff0000;" offset="1" />
+              <stop id="stop876" style="stop-color:#f0f;" offset="0" />
+              <stop id="stop878" style="stop-color:#f00;" offset="1" />
             </linearGradient>
           </defs>
           <path
@@ -171,10 +171,6 @@ async function signIn() {
   background: #2D2F36;
 }
 
-::-moz-selection {
-  background: #2D2F36;
-}
-
 .page {
   display: flex;
   justify-content: center;
@@ -183,6 +179,7 @@ async function signIn() {
   width: 100%;
   background-color: transparent;
 }
+
 .container {
   display: flex;
   flex-direction: row;
@@ -191,23 +188,25 @@ async function signIn() {
   width: 50%;
   height: 50%;
 }
+
 .left {
   background-color: transparent;
   border-top-left-radius: 1rem;
   border-bottom-left-radius: 1rem;
-  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 1rem rgb(0 0 0 / 20%);
   display: flex;
   flex-direction: column;
   height: calc(100% - 2rem);
   padding: 2rem;
   width: 50%;
 }
+
 .right {
   align-items: center;
   background: #474A59;
   border-top-right-radius: 1rem;
   border-bottom-right-radius: 1rem;
-  box-shadow: 0px 0px 40px 16px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 0 40px 16px rgb(0 0 0 / 22%);
   color: #F1F1F2;
   display: flex;
   flex-direction: column;
@@ -216,6 +215,7 @@ async function signIn() {
   padding: 2rem;
   width: 50%;
 }
+
 .logo {
   width: 50%;
   margin-bottom: 2rem;
@@ -246,7 +246,7 @@ svg {
 
 path {
   fill: none;
-  stroke: url(#linearGradient);
+  stroke: url("#linearGradient");
   stroke-width: 4;
   stroke-dasharray: 240 1386;
 }
@@ -267,6 +267,14 @@ label {
 }
 
 .form input {
+  &::-moz-focus-inner {
+    border: 0;
+  }
+
+  &:focus {
+    box-shadow: none;
+  }
+
   background-color: transparent;
   border: 0;
   color: #f2f2f2;
@@ -275,12 +283,6 @@ label {
   line-height: 30px;
   outline: none !important;
   width: 100%;
-  &::-moz-focus-inner {
-    border: 0;
-  }
-  &:focus {
-    box-shadow: none;
-  }
 }
 
 #submit {
